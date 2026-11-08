@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanatana Kosha | The Celestial Tapestry of Indian Mythology</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #f59e0b;
+      --gold-light: #fde68a;
+      --saffron: #ea580c;
+      --deep-space: #070510;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--deep-space);
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, .font-serif-title {
+      font-family: 'Cinzel', serif;
+    }
+    #webgl-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: auto;
+    }
+    .glass-panel {
+      background: rgba(15, 11, 29, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 158, 11, 0.22);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(253, 230, 138, 0.15);
+    }
+    .glass-card {
+      background: rgba(24, 18, 43, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(245, 158, 11, 0.18);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(245, 158, 11, 0.6);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px -10px rgba(245, 158, 11, 0.25);
+    }
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #fffbeb 0%, #fbbf24 50%, #ea580c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .inspect-active #ui-layer {
+      opacity: 0.08;
+      pointer-events: none;
+    }
+    .inspect-active #floating-controls {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070510;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #451a03;
+      border-radius: 4px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+  </style>
+</head>
+<body class="selection:bg-amber-500 selection:text-black">
+
+  <!-- 3D WebGL Background Stage -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Floating 3D Stage & Audio Controls -->
+  <div id="floating-controls" class="fixed bottom-6 right-6 z-50 flex flex-wrap items-center gap-3">
+    <div class="glass-panel px-3 py-2 rounded-full flex items-center gap-1.5 text-xs">
+      <span class="text-amber-300/80 px-2 font-medium hidden sm:inline">3D Artifact:</span>
+      <button onclick="switchArtifact(0)" id="art-btn-0" class="art-btn px-3 py-1.5 rounded-full bg-amber-500 text-black font-semibold transition">Chakra</button>
+      <button onclick="switchArtifact(1)" id="art-btn-1" class="art-btn px-3 py-1.5 rounded-full hover:bg-amber-500/20 text-amber-200 transition">Trishula</button>
+      <button onclick="switchArtifact(2)" id="art-btn-2" class="art-btn px-3 py-1.5 rounded-full hover:bg-amber-500/20 text-amber-200 transition">Sri Yantra</button>
+      <button onclick="switchArtifact(3)" id="art-btn-3" class="art-btn px-3 py-1.5 rounded-full hover:bg-amber-500/20 text-amber-200 transition">Mt. Meru</button>
+      <button onclick="switchArtifact(4)" id="art-btn-4" class="art-btn px-3 py-1.5 rounded-full hover:bg-amber-500/20 text-amber-200 transition">Dhanush</button>
+    </div>
+
+    <button id="inspect-btn" onclick="toggleInspectMode()" class="glass-panel px-4 py-2.5 rounded-full text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition flex items-center gap-2">
+      <span>👁️ Inspect 3D</span>
+    </button>
+
+    <button id="audio-btn" onclick="toggleVedicAudio()" class="glass-panel px-4 py-2.5 rounded-full text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition flex items-center gap-2">
+      <span id="audio-icon">🔇</span>
+      <span id="audio-label">Tanpura Drone</span>
+    </button>
+  </div>
+
+  <!-- Main Foreground Content -->
+  <div id="ui-layer" class="relative z-10 transition-opacity duration-500">
+
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-amber-500/20">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <a href="#" class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-700 flex items-center justify-center text-black font-bold text-lg shadow-lg shadow-amber-500/20">ॐ</div>
+          <div>
+            <span class="font-serif-title text-lg font-bold tracking-wider gold-gradient-text block leading-none">SANATANA KOSHA</span>
+            <span class="text-[10px] uppercase tracking-widest text-amber-300/60">3D Mythological Archive</span>
+          </div>
+        </a>
+        <nav class="hidden md:flex items-center gap-7 text-sm text-slate-300">
+          <a href="#deities" onclick="switchArtifact(0)" class="hover:text-amber-400 transition">Trimurti & Tridevi</a>
+          <a href="#dashavatara" onclick="switchArtifact(0)" class="hover:text-amber-400 transition">Dashavatara</a>
+          <a href="#cosmology" onclick="switchArtifact(3)" class="hover:text-amber-400 transition">14 Lokas & Yugas</a>
+          <a href="#itihasa" onclick="switchArtifact(4)" class="hover:text-amber-400 transition">Itihasa Epics</a>
+          <a href="#oracle" onclick="switchArtifact(2)" class="hover:text-amber-400 transition">Dharma Oracle</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="min-h-[88vh] flex items-center max-w-7xl mx-auto px-6 py-16">
+      <div class="max-w-2xl glass-panel p-8 md:p-12 rounded-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs uppercase tracking-widest mb-6">
+          <span>✦ Interactive WebGL Sacred Cosmology</span>
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black leading-tight gold-gradient-text mb-6">
+          The Eternal Tapestry of Bharata
+        </h1>
+        <p class="text-slate-300 text-base md:text-lg leading-relaxed mb-8">
+          Explore the philosophical architecture of Indian mythology—from the cosmic oceans of <span class="text-amber-300 font-medium">Kshira Sagara</span> and the 14 planes of <span class="text-amber-300 font-medium">Mount Meru</span> to the celestial weapons and timeless epics of Dharma. Drag anywhere on the background to rotate the 3D artifacts.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#deities" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold text-sm shadow-lg shadow-amber-500/25 hover:brightness-110 transition">
+            Explore the Pantheon
+          </a>
+          <button onclick="toggleInspectMode()" class="px-6 py-3.5 rounded-xl border border-amber-500/40 text-amber-200 font-semibold text-sm hover:bg-amber-500/10 transition">
+            Enter 360° Artifact View
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Trimurti & Tridevi -->
+    <section id="deities" class="max-w-7xl mx-auto px-6 py-20">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+        <div>
+          <p class="text-amber-400 text-xs uppercase tracking-widest font-semibold mb-2">Cosmic Archetypes</p>
+          <h2 class="text-3xl md:text-5xl font-bold gold-gradient-text">The Trimurti & Tridevi</h2>
+        </div>
+        <p class="text-slate-400 text-sm max-w-md mt-3 md:mt-0">
+          Click any deity card to synchronize the 3D celestial weapon or sacred geometry in the background stage.
+        </p>
+      </div>
+
+      <div id="deity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- Section 2: Dashavatara Interactive Timeline -->
+    <section id="dashavatara" class="max-w-7xl mx-auto px-6 py-20">
+      <div class="glass-panel rounded-3xl p-8 md:p-12">
+        <div class="max-w-2xl mb-8">
+          <p class="text-amber-400 text-xs uppercase tracking-widest font-semibold mb-2">Cosmic Evolution</p>
+          <h2 class="text-3xl md:text-4xl font-bold gold-gradient-text mb-3">The Dashavatara Continuum</h2>
+          <p class="text-slate-300 text-sm">
+            The ten primary descents of Vishnu mirror both the shifting moral fabric of the four Yugas and the progression of conscious life from aquatic origins to spiritual liberation.
+          </p>
+        </div>
+
+        <!-- Avatar Selector Pills -->
+        <div id="avatar-tabs" class="flex flex-wrap gap-2 mb-8"></div>
+
+        <!-- Active Avatar Detail Card -->
+        <div id="avatar-detail" class="glass-card rounded-2xl p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center"></div>
+      </div>
+    </section>
+
+    <!-- Section 3: 14 Lokas & Mount Meru Cosmology -->
+    <section id="cosmology" class="max-w-7xl mx-auto px-6 py-20">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-5 glass-panel rounded-3xl p-8">
+          <p class="text-amber-400 text-xs uppercase tracking-widest font-semibold mb-2">Axis Mundi</p>
+          <h2 class="text-3xl font-bold gold-gradient-text mb-4">Mount Meru & The 14 Lokas</h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-6">
+            Puranic cosmology envisions the universe as concentric planes of consciousness stacked along the golden axis of Mount Meru—seven higher realms (<span class="text-amber-300">Vyahritis</span>) and seven subterranean realms (<span class="text-amber-300">Patalas</span>).
+          </p>
+          <button onclick="switchArtifact(3)" class="w-full py-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-semibold uppercase tracking-wider hover:bg-amber-500/30 transition mb-6">
+            Activate 3D Mount Meru Model
+          </button>
+          <div id="loka-detail-box" class="p-5 rounded-2xl bg-black/40 border border-amber-500/20">
+            <span id="loka-tier-badge" class="text-[11px] uppercase tracking-widest text-amber-400 font-semibold">Realm 01 • Highest Plane</span>
+            <h3 id="loka-title" class="text-2xl font-bold text-white mt-1 mb-2">Satya Loka (Brahmaloka)</h3>
+            <p id="loka-desc" class="text-slate-300 text-sm leading-relaxed">
+              The realm of pure truth and timeless awareness where Brahma resides; beings here are free from the cycle of birth and dissolution until the end of a Kalpa.
+            </p>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 glass-panel rounded-3xl p-6 md:p-8">
+          <h3 class="text-lg font-semibold text-amber-200 mb-4">Select a Cosmic Plane to Move the 3D Meru Ring</h3>
+          <div id="loka-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Itihasa Epics (Ramayana & Mahabharata) -->
+    <section id="itihasa" class="max-w-7xl mx-auto px-6 py-20">
+      <div class="mb-10">
+        <p class="text-amber-400 text-xs uppercase tracking-widest font-semibold mb-2">Immortal Chronicles</p>
+        <h2 class="text-3xl md:text-5xl font-bold gold-gradient-text">The Two Great Itihasas</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Ramayana -->
+        <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 text-xs font-semibold">Treta Yuga • 24,000 Verses</span>
+              <button onclick="switchArtifact(4)" class="text-xs text-amber-400 hover:underline">View Kodanda Bow →</button>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-2">Valmiki Ramayana</h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6">
+              Composed by Adi Kavi Valmiki, the Ramayana charts the journey of Prince Rama of Ayodhya—the embodiment of <span class="text-amber-300">Maryada</span> (righteous conduct)—through exile, the abduction of Sita, the alliance with Kishkindha, and the cosmic conflict at Lanka.
+            </p>
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10"><strong class="text-amber-300">7 Kandas:</strong> Bala, Ayodhya, Aranya, Kishkindha, Sundara, Yuddha, and Uttara Kanda.</div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10"><strong class="text-amber-300">Core Philosophy:</strong> Duty to truth, ideal governance (Rama Rajya), and unwavering devotion.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mahabharata -->
+        <div class="glass-panel rounded-3xl p-8 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full bg-orange-500/15 text-orange-300 text-xs font-semibold">Dvapara Yuga • 100,000 Shlokas</span>
+              <button onclick="switchArtifact(0)" class="text-xs text-amber-400 hover:underline">View Sudarshana →</button>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-2">Vyasa Mahabharata</h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6">
+              Compiled by Sage Krishna Dvaipayana Vyasa, the Mahabharata examines the intricate moral ambiguities of <span class="text-amber-300">Dharma Sankata</span> (ethical dilemmas) culminating in the 18-day war at Kurukshetra and the spiritual discourse of the Bhagavad Gita.
+            </p>
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10"><strong class="text-amber-300">18 Parvas:</strong> From Adi Parva and Sabha Parva to Bhishma Parva (containing the Gita) and Svargarohana.</div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10"><strong class="text-amber-300">Core Philosophy:</strong> Selfless action (Nishkama Karma), discernment, and cosmic justice.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Dharma Wisdom Oracle & Compendium Search -->
+    <section id="oracle" class="max-w-7xl mx-auto px-6 py-20">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Wisdom Oracle -->
+        <div class="lg:col-span-5 glass-panel rounded-3xl p-8 flex flex-col justify-between">
+          <div>
+            <p class="text-amber-400 text-xs uppercase tracking-widest font-semibold mb-2">Upanishadic & Gita Contemplation</p>
+            <h2 class="text-3xl font-bold gold-gradient-text mb-4">Dharma Wisdom Oracle</h2>
+            <p class="text-slate-300 text-sm mb-6">
+              Draw an original philosophical reflection synthesized from the Upanishads, Bhagavad Gita, and Puranic lore.
+            </p>
+            <div class="p-6 rounded-2xl bg-black/50 border border-amber-500/30 mb-6">
+              <p id="oracle-sanskrit" class="text-amber-300 font-serif-title text-lg mb-2">Karmanye Vadhikaraste</p>
+              <p id="oracle-meaning" class="text-slate-200 text-sm leading-relaxed mb-3">
+                Focus wholehearted awareness on right action in the present moment while releasing attachment to external outcomes; equanimity in success and failure is the essence of Yoga.
+              </p>
+              <span id="oracle-source" class="text-xs text-amber-400/70 uppercase tracking-wider">— Bhagavad Gita 2.47 Theme</span>
+            </div>
+          </div>
+          <button onclick="drawOracleWisdom()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold text-sm hover:brightness-110 transition">
+            ✦ Draw Another Philosophical Reflection
+          </button>
+        </div>
+
+        <!-- Mythological Compendium Filter -->
+        <div class="lg:col-span-7 glass-panel rounded-3xl p-8">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-2xl font-bold text-white">Sacred Compendium</h3>
+              <p class="text-xs text-slate-400">Search celestial astras, sages, realms, and philosophical concepts</p>
+            </div>
+            <input id="compendium-search" oninput="filterCompendium()" type="text" placeholder="Search e.g. Brahmastra, Garuda, Rta..." class="px-4 py-2.5 rounded-xl bg-black/50 border border-amber-500/30 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400">
+          </div>
+          <div id="compendium-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-amber-500/20 py-10 text-center text-xs text-slate-500">
+      <p>Sanatana Kosha • Procedural Three.js WebGL Architecture & Web Audio Vedic Synthesizer</p>
+    </footer>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. MYTHOLOGICAL DATA ARCHIVE
+    // ==========================================
+    const DEITIES = [
+      {
+        name: "Mahavishnu",
+        title: "The Cosmic Preserver",
+        consort: "Mahalakshmi",
+        abode: "Vaikuntha / Kshira Sagara",
+        artifactIdx: 0,
+        symbolism: "Holds the Sudarshana Chakra (cosmic time), Panchajanya Shankha (primordial sound), Kaumodaki Gada (vital force), and Padma (spiritual unfoldment).",
+        mantra: "Om Namo Narayanaya"
+      },
+      {
+        name: "Mahadeva Shiva",
+        title: "The Auspicious Transformer",
+        consort: "Adi Parashakti / Parvati",
+        abode: "Mount Kailasha",
+        artifactIdx: 1,
+        symbolism: "Wields the Trishula representing mastery over Sattva, Rajas, and Tamas, while the Damaru beats the rhythm of creation and dissolution.",
+        mantra: "Om Namah Shivaya"
+      },
+      {
+        name: "Brahma",
+        title: "The Architect of Manifestation",
+        consort: "Saraswati",
+        abode: "Satya Loka",
+        artifactIdx: 2,
+        symbolism: "Four faces signify the four Vedas and cardinal directions; holds the Kamandalu (waters of creation) and Akshamala (cycles of time).",
+        mantra: "Om Ekaaksaraaya Vidmahe"
+      },
+      {
+        name: "Adi Parashakti",
+        title: "Primordial Cosmic Energy",
+        consort: "Paramashiva",
+        abode: "Manidvipa",
+        artifactIdx: 2,
+        symbolism: "Represented geometrically by the Sri Yantra—nine interlocking triangles radiating dynamic consciousness (Chit-Shakti) throughout the cosmos.",
+        mantra: "Om Aim Hreem Kleem"
+      },
+      {
+        name: "Mahalakshmi",
+        title: "Bestower of Auspicious Abundance",
+        consort: "Mahavishnu",
+        abode: "Vaikuntha",
+        artifactIdx: 2,
+        symbolism: "Seated upon the blooming Sahasrara Padma, signifying spiritual and material harmony (Sri) untouched by attachment.",
+        mantra: "Om Shreem Mahalakshmyai Namah"
+      },
+      {
+        name: "Saraswati",
+        title: "Sovereign of Wisdom & Nada",
+        consort: "Brahma",
+        abode: "Brahmaloka",
+        artifactIdx: 4,
+        symbolism: "Plays the Kachchapi Veena tuning the intellect to cosmic harmony (Rta), accompanied by the Hamsa swan of spiritual discrimination (Viveka).",
+        mantra: "Om Aim Saraswatyai Namah"
+      }
+    ];
+
+    const AVATARS = [
+      { id: 1, name: "Matsya", yuga: "Satya Yuga", form: "Cosmic Horned Fish", desc: "Guided Vaivasvata Manu's ark across the cosmic deluge (Pralaya) and preserved the sacred Vedas and seeds of life.", parallel: "Aquatic Origin of Life" },
+      { id: 2, name: "Kurma", yuga: "Satya Yuga", form: "World Tortoise", desc: "Supported Mount Mandara on his shell as the cosmic pivot during the churning of the Ocean of Milk (Samudra Manthana).", parallel: "Amphibious Transition" },
+      { id: 3, name: "Varaha", yuga: "Satya Yuga", form: "Celestial Boar", desc: "Lifted Bhudevi (the Earth) from the cosmic abyss on his tusks after defeating Hiranyaksha.", parallel: "Terrestrial Mammals" },
+      { id: 4, name: "Narasimha", yuga: "Satya Yuga", form: "Man-Lion", desc: "Emerged from a pillar at twilight—neither day nor night, indoors nor outdoors—to protect the devotee Prahlada.", parallel: "Emergence of Liminal Intelligence" },
+      { id: 5, name: "Vamana", yuga: "Treta Yuga", form: "Dwarf Brahmin / Trivikrama", desc: "Measured the three worlds in three cosmic strides, restoring balance from Emperor Mahabali without warfare.", parallel: "Early Hominid Stature" },
+      { id: 6, name: "Parashurama", yuga: "Treta Yuga", form: "Warrior Sage with Axe", desc: "Wielded the divine Parashu bestowed by Shiva to check tyrannical abuse of martial power.", parallel: "Tool-Making Mastery" },
+      { id: 7, name: "Rama", yuga: "Treta Yuga", form: "Prince of Ayodhya", desc: "Exemplified Maryada Purushottama—adherence to truth, duty, and compassionate governance.", parallel: "Civic & Ethical Society" },
+      { id: 8, name: "Krishna", yuga: "Dvapara Yuga", form: "Statesman & Yogeshwara", desc: "Delivered the Bhagavad Gita at Kurukshetra, synthesizing Karma, Bhakti, and Jnana Yoga.", parallel: "Philosophical & Meta-Cognitive Peak" },
+      { id: 9, name: "Buddha / Balarama", yuga: "Kali / Dvapara", form: "Awakened Sage / Plow Bearer", desc: "Emphasized non-violence (Ahimsa), compassion, and inner awakening beyond ritualism.", parallel: "Universal Compassion" },
+      { id: 10, name: "Kalki", yuga: "End of Kali Yuga", form: "Rider on White Steed Devadatta", desc: "Foretold to appear at the close of Kali Yuga to dissolve spiritual darkness and inaugurate a new Satya Yuga.", parallel: "Transcendence & Renewal" }
+    ];
+
+    const LOKAS = [
+      { idx: 0, name: "Satya Loka", tier: "Urdhva Loka 1 (Highest)", yPos: 2.7, desc: "Abode of Brahma and pure truth; souls here experience cosmic consciousness free from rebirth." },
+      { idx: 1, name: "Tapa Loka", tier: "Urdhva Loka 2", yPos: 2.25, desc: "Plane of unshakeable ascetic illumination inhabited by the Kumara sages." },
+      { idx: 2, name: "Jana Loka", tier: "Urdhva Loka 3", yPos: 1.8, desc: "Sphere of spiritual wisdom and divine progeny born of pure mind." },
+      { idx: 3, name: "Mahar Loka", tier: "Urdhva Loka 4", yPos: 1.35, desc: "Realm of great rishis such as Bhrigu who witness the dissolution and recreation of lower worlds." },
+      { idx: 4, name: "Svar Loka (Svarga)", tier: "Urdhva Loka 5", yPos: 0.9, desc: "Celestial realm of Indra, the Devas, and luminous cosmic forces between sun and pole star." },
+      { idx: 5, name: "Bhuvar Loka", tier: "Urdhva Loka 6", yPos: 0.45, desc: "Atmospheric and subtle Astral plane inhabited by Siddhas, Charanas, and Pitrs." },
+      { idx: 6, name: "Bhur Loka (Prithvi)", tier: "Urdhva Loka 7 (Earth)", yPos: 0.0, desc: "The terrestrial plane of embodied action (Karma Bhumi) where souls cultivate Dharma." },
+      { idx: 7, name: "Atala", tier: "Adho Loka 1", yPos: -0.45, desc: "First subterranean plane characterized by enchanting illusions." },
+      { idx: 8, name: "Vitala", tier: "Adho Loka 2", yPos: -0.9, desc: "Subterranean realm associated with Hatakeshvara Shiva and golden rivers." },
+      { idx: 9, name: "Sutala", tier: "Adho Loka 3", yPos: -1.35, desc: "Auspicious subterranean kingdom granted to the righteous Emperor Mahabali by Vamana." },
+      { idx: 10, name: "Talatala", tier: "Adho Loka 4", yPos: -1.8, desc: "Architectural realm governed by Maya Danava, master of cosmic illusions and craft." },
+      { idx: 11, name: "Mahatala", tier: "Adho Loka 5", yPos: -2.15, desc: "Abode of multi-hooded celestial serpents (Kadraveya Nagas)." },
+      { idx: 12, name: "Rasatala", tier: "Adho Loka 6", yPos: -2.45, desc: "Dwelling place of the Daityas and Danavas in permanent tension with the Devas." },
+      { idx: 13, name: "Patala", tier: "Adho Loka 7 (Base)", yPos: -2.75, desc: "Lowest jewel-lit subterranean realm ruled by Vasuki and resting upon Adi Shesha." }
+    ];
+
+    const ORACLE_REFLECTIONS = [
+      { sanskrit: "Tat Tvam Asi", meaning: "The indivisible consciousness that illuminates the cosmos is identical to the innermost witness within your own awareness.", source: "Chandogya Upanishad 6.8.7 Theme" },
+      { sanskrit: "Yoga-Karmasu Kaushalam", meaning: "True mastery in action arises when the mind remains balanced, serene, and unattached to egoic reward.", source: "Bhagavad Gita 2.50 Theme" },
+      { sanskrit: "Ekam Sat Vipra Bahudha Vadanti", meaning: "Ultimate Reality is One; wise seekers and sages describe that singular truth through diverse names and archetypes.", source: "Rig Veda 1.164.46 Theme" },
+      { sanskrit: "Asato Ma Sadgamaya", meaning: "Lead awareness from the transient to the eternal, from ignorance to luminous clarity, and from mortality to timelessness.", source: "Brihadaranyaka Upanishad 1.3.28 Theme" },
+      { sanskrit: "Uddhared Atmanatmanam", meaning: "Elevate yourself through your own disciplined mind; the conscious mind is both the highest ally and the greatest obstacle.", source: "Bhagavad Gita 6.5 Theme" }
+    ];
+
+    const COMPENDIUM = [
+      { term: "Sudarshana Chakra", cat: "Divya Astra", desc: "Vishnu's 108-serrated spinning discus representing auspicious vision and the unstoppable wheel of cosmic time." },
+      { term: "Pashupatastra", cat: "Divya Astra", desc: "Shiva's supreme personal weapon invoked through mind, eyes, words, or bow; granted to Arjuna after austere tapasya." },
+      { term: "Rta", cat: "Vedic Philosophy", desc: "The cosmic order, natural law, and harmonic rhythm that governs the movement of stars, seasons, and moral truth." },
+      { term: "Samudra Manthana", cat: "Cosmology", desc: "The churning of the Cosmic Ocean by Devas and Asuras using Mount Mandara and Vasuki, yielding Amrita and Dhanvantari." },
+      { term: "Garuda", cat: "Celestial Being", desc: "Solar eagle mount (Vahana) of Vishnu, son of Kashyapa and Vinata, symbolizing Vedic knowledge and swiftness." },
+      { term: "Adi Shesha (Ananta)", cat: "Cosmic Serpent", desc: "Thousand-hooded serpent of infinity upon whom Vishnu reclines between cosmic cycles of creation." },
+      { term: "Saptarishi", cat: "Cosmic Sages", desc: "The seven mind-born sages who preserve Vedic wisdom across every Manvantara epoch and shine as Ursa Major." },
+      { term: "Sri Yantra", cat: "Sacred Geometry", desc: "Nine interlocking triangles around a central Bindu representing the union of Shiva (consciousness) and Shakti (energy)." }
+    ];
+
+    // ==========================================
+    // 2. THREE.JS 3D SACRED ARTIFACTS ENGINE
+    // ==========================================
+    const canvas = document.getElementById('webgl-canvas');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x070510, 0.045);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(2.2, 0.6, 7.2);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffedd5, 0.6);
+    scene.add(ambientLight);
+
+    const goldLight = new THREE.PointLight(0xf59e0b, 2.8, 25);
+    goldLight.position.set(5, 5, 5);
+    scene.add(goldLight);
+
+    const rimLight = new THREE.PointLight(0x38bdf8, 1.4, 25);
+    rimLight.position.set(-6, -3, 3);
+    scene.add(rimLight);
+
+    // Materials
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: 0xfbbf24,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0x78350f,
+      emissiveIntensity: 0.25
+    });
+    const copperMat = new THREE.MeshStandardMaterial({
+      color: 0xea580c,
+      metalness: 0.75,
+      roughness: 0.28
+    });
+    const glowWireMat = new THREE.MeshBasicMaterial({
+      color: 0xfde68a,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.35
+    });
+
+    // Artifact Container Group
+    const artifactRoot = new THREE.Group();
+    artifactRoot.position.x = 2.1;
+    scene.add(artifactRoot);
+
+    const artifacts = [];
+    let meruRingMesh = null;
+    let targetMeruY = 2.7;
+
+    // 0: Sudarshana Chakra
+    function buildChakra() {
+      const group = new THREE.Group();
+      const outerRing = new THREE.Mesh(new THREE.TorusGeometry(2.1, 0.12, 24, 96), goldMat);
+      const innerRing = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.08, 20, 64), copperMat);
+      const hub = new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 1), goldMat);
+      group.add(outerRing, innerRing, hub);
+
+      for (let i = 0; i < 24; i++) {
+        const angle = (i / 24) * Math.PI * 2;
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.45, 6), goldMat);
+        spike.position.set(Math.cos(angle) * 2.35, Math.sin(angle) * 2.35, 0);
+        spike.rotation.z = angle - Math.PI / 2;
+        group.add(spike);
+
+        if (i % 2 === 0) {
+          const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.1, 8), copperMat);
+          spoke.position.set(Math.cos(angle) * 1.05, Math.sin(angle) * 1.05, 0);
+          spoke.rotation.z = angle - Math.PI / 2;
+          group.add(spoke);
+        }
+      }
+      return group;
+    }
+
+    // 1: Pinaka Trishula & Damaru
+    function buildTrishula() {
+      const group = new THREE.Group();
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 5.2, 16), goldMat);
+      group.add(shaft);
+
+      const centerProng = new THREE.Mesh(new THREE.ConeGeometry(0.14, 1.4, 16), goldMat);
+      centerProng.position.y = 2.9;
+      group.add(centerProng);
+
+      [-1, 1].forEach(dir => {
+        const prong = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.075, 16, 48, Math.PI * 0.85), goldMat);
+        prong.position.set(dir * 0.35, 2.1, 0);
+        prong.rotation.z = dir === 1 ? -0.4 : Math.PI + 0.4;
+        group.add(prong);
+      });
+
+      // Damaru Hourglass Drum
+      const cone1 = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.55, 20), copperMat);
+      cone1.position.set(0, 0.8, 0);
+      cone1.rotation.z = Math.PI / 2;
+      const cone2 = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.55, 20), copperMat);
+      cone2.position.set(0, 0.8, 0);
+      cone2.rotation.z = -Math.PI / 2;
+      group.add(cone1, cone2);
+      return group;
+    }
+
+    // 2: 3D Sri Yantra & Sahasrara Padma
+    function buildSriYantra() {
+      const group = new THREE.Group();
+      for (let i = 0; i < 6; i++) {
+        const scale = 2.2 - i * 0.28;
+        const pyrUp = new THREE.Mesh(new THREE.ConeGeometry(scale * 0.7, scale * 0.65, 3), i % 2 === 0 ? goldMat : glowWireMat);
+        pyrUp.position.y = i * 0.12 - 0.3;
+        const pyrDown = new THREE.Mesh(new THREE.ConeGeometry(scale * 0.68, scale * 0.6, 3), copperMat);
+        pyrDown.rotation.x = Math.PI;
+        pyrDown.rotation.y = Math.PI / 3;
+        pyrDown.position.y = -i * 0.1 + 0.2;
+        group.add(pyrUp, pyrDown);
+      }
+      const bindu = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), goldMat);
+      bindu.position.y = 0.6;
+      group.add(bindu);
+      return group;
+    }
+
+    // 3: Mount Meru 14 Lokas Axis
+    function buildMountMeru() {
+      const group = new THREE.Group();
+      for (let i = 0; i < 14; i++) {
+        const y = 2.7 - i * 0.42;
+        const radius = 0.45 + Math.abs(6.5 - i) * 0.22;
+        const disc = new THREE.Mesh(
+          new THREE.CylinderGeometry(radius * 0.88, radius, 0.16, 8),
+          i < 7 ? goldMat : copperMat
+        );
+        disc.position.y = y;
+        group.add(disc);
+      }
+      meruRingMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(2.2, 0.06, 16, 64),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+      );
+      meruRingMesh.rotation.x = Math.PI / 2;
+      meruRingMesh.position.y = targetMeruY;
+      group.add(meruRingMesh);
+      return group;
+    }
+
+    // 4: Kodanda / Gandiva Celestial Bow
+    function buildDhanush() {
+      const group = new THREE.Group();
+      const bowArc = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.09, 20, 80, Math.PI * 1.15), goldMat);
+      bowArc.rotation.z = -Math.PI * 0.575;
+      group.add(bowArc);
+
+      const stringGeo = new THREE.CylinderGeometry(0.015, 0.015, 4.45, 8);
+      const bowString = new THREE.Mesh(stringGeo, glowWireMat);
+      bowString.position.x = -0.52;
+      group.add(bowString);
+
+      const arrowShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 3.8, 12), copperMat);
+      arrowShaft.rotation.z = -Math.PI / 2;
+      arrowShaft.position.x = 0.8;
+      const arrowHead = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.45, 8), goldMat);
+      arrowHead.rotation.z = -Math.PI / 2;
+      arrowHead.position.x = 2.75;
+      group.add(arrowShaft, arrowHead);
+      return group;
+    }
+
+    artifacts.push(buildChakra(), buildTrishula(), buildSriYantra(), buildMountMeru(), buildDhanush());
+    artifacts.forEach((art, idx) => {
+      art.visible = idx === 0;
+      artifactRoot.add(art);
+    });
+
+    // Kshira Sagara Cosmic Ocean Grid + Starfield
+    const oceanGeo = new THREE.PlaneGeometry(50, 50, 48, 48);
+    oceanGeo.rotateX(-Math.PI / 2);
+    const oceanMesh = new THREE.Mesh(oceanGeo, new THREE.MeshBasicMaterial({
+      color: 0xd97706,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.12
+    }));
+    oceanMesh.position.y = -4.2;
+    scene.add(oceanMesh);
+
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i++) {
+      starPos[i] = (Math.random() - 0.5) * 45;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfde68a, size: 0.06 }));
+    scene.add(stars);
+
+    // Mouse / Touch Drag Rotation
+    let isDragging = false;
+    let prevX = 0, prevY = 0;
+    let rotY = 0, rotX = 0.2;
+
+    window.addEventListener('pointerdown', e => {
+      if (e.target.closest('button, a, input')) return;
+      isDragging = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    });
+    window.addEventListener('pointermove', e => {
+      if (!isDragging) return;
+      rotY += (e.clientX - prevX) * 0.007;
+      rotX += (e.clientY - prevY) * 0.007;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    });
+    window.addEventListener('pointerup', () => isDragging = false);
+
+    function switchArtifact(index) {
+      artifacts.forEach((art, i) => art.visible = i === index);
+      document.querySelectorAll('.art-btn').forEach((btn, i) => {
+        btn.className = i === index
+          ? 'art-btn px-3 py-1.5 rounded-full bg-amber-500 text-black font-semibold transition'
+          : 'art-btn px-3 py-1.5 rounded-full hover:bg-amber-500/20 text-amber-200 transition';
+      });
+    }
+
+    function toggleInspectMode() {
+      document.body.classList.toggle('inspect-active');
+      const active = document.body.classList.contains('inspect-active');
+      artifactRoot.position.x = active ? 0 : (window.innerWidth < 768 ? 0 : 2.1);
+      document.getElementById('inspect-btn').innerHTML = active ? '<span>✕ Exit 3D Inspect</span>' : '<span>👁️ Inspect 3D</span>';
+    }
+
+    // Animation Loop
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      artifactRoot.rotation.y = rotY + t * 0.35;
+      artifactRoot.rotation.x = rotX + Math.sin(t * 0.7) * 0.1;
+
+      if (artifacts[0].visible) artifacts[0].rotation.z = -t * 0.8;
+      if (meruRingMesh) {
+        meruRingMesh.position.y += (targetMeruY - meruRingMesh.position.y) * 0.08;
+      }
+
+      // Animate Kshira Sagara Waves
+      const pos = oceanGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+        pos.setY(i, Math.sin(x * 0.35 + t * 1.2) * 0.25 + Math.cos(z * 0.35 + t * 0.9) * 0.25);
+      }
+      pos.needsUpdate = true;
+
+      stars.rotation.y = t * 0.02;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (!document.body.classList.contains('inspect-active')) {
+        artifactRoot.position.x = window.innerWidth < 768 ? 0 : 2.1;
+      }
+    });
+
+    // ==========================================
+    // 3. UI RENDERING & INTERACTIVITY
+    // ==========================================
+    function renderDeities() {
+      const grid = document.getElementById('deity-grid');
+      grid.innerHTML = DEITIES.map(d => `
+        <div onclick="switchArtifact(${d.artifactIdx})" class="glass-card rounded-2xl p-6 cursor-pointer flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-amber-400 mb-2">
+              <span>${d.abode}</span>
+              <span>3D Sync ✦</span>
+            </div>
+            <h3 class="text-2xl font-bold text-white">${d.name}</h3>
+            <p class="text-xs text-amber-300/80 mb-4">${d.title} • Consort: ${d.consort}</p>
+            <p class="text-slate-300 text-sm leading-relaxed mb-5">${d.symbolism}</p>
+          </div>
+          <div class="pt-3 border-t border-amber-500/20 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Moola Mantra:</span>
+            <span class="font-serif-title text-amber-300 font-semibold">${d.mantra}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectAvatar(index) {
+      const av = AVATARS[index];
+      document.querySelectorAll('.avatar-pill').forEach((btn, i) => {
+        btn.className = i === index
+          ? 'avatar-pill px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-xs transition'
+          : 'avatar-pill px-4 py-2 rounded-xl bg-white/5 hover:bg-amber-500/20 text-slate-300 text-xs transition';
+      });
+      document.getElementById('avatar-detail').innerHTML = `
+        <div class="lg:col-span-2">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold">Avatar #${av.id} • ${av.yuga}</span>
+            <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs">Evolutionary Parallel: ${av.parallel}</span>
+          </div>
+          <h3 class="text-3xl font-bold text-white mb-2">${av.name} — <span class="text-amber-300 font-normal text-xl">${av.form}</span></h3>
+          <p class="text-slate-300 text-sm leading-relaxed">${av.desc}</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-black/40 border border-amber-500/20 text-center">
+          <p class="text-xs uppercase tracking-widest text-amber-400 mb-1">Epoch Alignment</p>
+          <p class="font-serif-title text-2xl font-bold gold-gradient-text mb-2">${av.yuga}</p>
+          <p class="text-xs text-slate-400">Click "Chakra" or "Dhanush" in the 3D controls to inspect Vishnu's Sudarshana or Rama's Kodanda.</p>
+        </div>
+      `;
+    }
+
+    function renderAvatars() {
+      document.getElementById('avatar-tabs').innerHTML = AVATARS.map((av, i) => `
+        <button onclick="selectAvatar(${i})" class="avatar-pill">${av.id}. ${av.name}</button>
+      `).join('');
+      selectAvatar(0);
+    }
+
+    function selectLoka(index) {
+      const loka = LOKAS[index];
+      switchArtifact(3);
+      targetMeruY = loka.yPos;
+      document.getElementById('loka-tier-badge').textContent = loka.tier;
+      document.getElementById('loka-title').textContent = loka.name;
+      document.getElementById('loka-desc').textContent = loka.desc;
+    }
+
+    function renderLokas() {
+      document.getElementById('loka-list').innerHTML = LOKAS.map((l, i) => `
+        <button onclick="selectLoka(${i})" class="text-left p-3 rounded-xl bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/40 transition flex items-center justify-between">
+          <div>
+            <span class="text-xs text-amber-400 block">${l.tier}</span>
+            <span class="text-sm font-semibold text-white">${l.name}</span>
+          </div>
+          <span class="text-amber-300 text-xs">◉</span>
+        </button>
+      `).join('');
+    }
+
+    let oracleIdx = 0;
+    function drawOracleWisdom() {
+      oracleIdx = (oracleIdx + 1) % ORACLE_REFLECTIONS.length;
+      const item = ORACLE_REFLECTIONS[oracleIdx];
+      document.getElementById('oracle-sanskrit').textContent = item.sanskrit;
+      document.getElementById('oracle-meaning').textContent = item.meaning;
+      document.getElementById('oracle-source').textContent = `— ${item.source}`;
+    }
+
+    function filterCompendium() {
+      const q = document.getElementById('compendium-search').value.toLowerCase();
+      const filtered = COMPENDIUM.filter(c =>
+        c.term.toLowerCase().includes(q) ||
+        c.cat.toLowerCase().includes(q) ||
+        c.desc.toLowerCase().includes(q)
+      );
+      document.getElementById('compendium-list').innerHTML = filtered.map(c => `
+        <div class="p-4 rounded-2xl bg-black/40 border border-amber-500/20">
+          <span class="text-[10px] uppercase tracking-widest text-amber-400">${c.cat}</span>
+          <h4 class="text-base font-bold text-white mt-0.5 mb-1">${c.term}</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">${c.desc}</p>
+        </div>
+      `).join('');
+    }
+
+    // ==========================================
+    // 4. WEB AUDIO API VEDIC TANPURA SYNTHESIZER
+    // ==========================================
+    let audioCtx = null;
+    let isPlayingAudio = false;
+    let masterGain = null;
+
+    function toggleVedicAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.01;
+        masterGain.connect(audioCtx.destination);
+
+        // Fundamental Sa (136.1 Hz — Om / Earth year frequency) + Pa (204.15 Hz) + Low Sa (68.05 Hz)
+        [68.05, 136.1, 204.15].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const oscGain = audioCtx.createGain();
+          osc.type = idx === 1 ? 'triangle' : 'sine';
+          osc.frequency.value = freq;
+          oscGain.gain.value = idx === 0 ? 0.4 : 0.25;
+          osc.connect(oscGain);
+          oscGain.connect(masterGain);
+          osc.start();
+        });
+      }
+
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      isPlayingAudio = !isPlayingAudio;
+
+      masterGain.gain.setTargetAtTime(isPlayingAudio ? 0.18 : 0.0001, audioCtx.currentTime, 0.4);
+      document.getElementById('audio-icon').textContent = isPlayingAudio ? '🔊' : '🔇';
+      document.getElementById('audio-label').textContent = isPlayingAudio ? 'Tanpura Active' : 'Tanpura Drone';
+    }
+
+    // Initialize Sections
+    renderDeities();
+    renderAvatars();
+    renderLokas();
+    filterCompendium();
+  </script>
+</body>
+</html>
